@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Adder</title>
+</head>
+<body>
+  <h2>Add to GitHub Total</h2>
+  <input type="number" id="numInput" value="1">
+  <button onclick="sendData()">Add to Total</button>
+  
+  <p id="status"></p>
+  <h3 id="displayTotal"></h3>
+
+  <script>
+    async function sendData() {
+      const val = document.getElementById('numInput').value;
+      const status = document.getElementById('status');
+      const display = document.getElementById('displayTotal');
+      
+      status.innerText = "Calculating and uploading...";
+
+      try {
+        const response = await fetch('/.netlify/functions/upload', {
+          method: 'POST',
+          body: JSON.stringify({ userInput: val })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          status.innerText = "✅ GitHub file updated!";
+          display.innerText = "New Total: " + result.newTotal;
+        } else {
+          status.innerText = "❌ Error: " + result.message;
+        }
+      } catch (err) {
+        status.innerText = "❌ Connection failed.";
+      }
+    }
+  </script>
+</body>
+</html>
