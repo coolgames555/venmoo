@@ -9,8 +9,8 @@ exports.handler = async (event) => {
   try {
     // 1. Get current data from GitHub
     const { data } = await octokit.repos.getContent({
-      owner: "YOUR_GITHUB_USERNAME",
-      repo: "YOUR_REPO_NAME",
+      owner: "coolgames555",
+      repo: "venmoo",
       path: "data.json",
     });
 
