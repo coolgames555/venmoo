@@ -2,42 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GitHub Adder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Integer Adder</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 80%; padding: 10px; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        button { width: 88%; padding: 10px; background-color: #2ea44f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background-color: #94d3a2; cursor: not-allowed; }
+        #status { margin-top: 1rem; font-size: 0.9rem; color: #555; }
+        .success { color: #2ea44f !important; font-weight: bold; }
+        .error { color: #cf222e !important; }
+    </style>
 </head>
 <body>
-  <h2>Add to GitHub Total</h2>
-  <input type="number" id="numInput" value="1">
-  <button onclick="sendData()">Add to Total</button>
-  
-  <p id="status"></p>
-  <h3 id="displayTotal"></h3>
 
-  <script>
+<div class="card">
+    <h2>Add to Total</h2>
+    <p>Enter an integer to update the JSON file on GitHub.</p>
+    
+    <input type="number" id="numInput" value="1" step="1">
+    <button id="btn" onclick="sendData()">Update GitHub</button>
+    
+    <div id="status">Ready</div>
+</div>
+
+<script>
     async function sendData() {
-      const val = document.getElementById('numInput').value;
-      const status = document.getElementById('status');
-      const display = document.getElementById('displayTotal');
-      
-      status.innerText = "Calculating and uploading...";
+        const input = document.getElementById('numInput');
+        const btn = document.getElementById('btn');
+        const status = document.getElementById('status');
+        const val = input.value;
 
-      try {
-        const response = await fetch('/.netlify/functions/upload', {
-          method: 'POST',
-          body: JSON.stringify({ userInput: val })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          status.innerText = "✅ GitHub file updated!";
-          display.innerText = "New Total: " + result.newTotal;
-        } else {
-          status.innerText = "❌ Error: " + result.message;
+        // Basic validation
+        if (!val || isNaN(val)) {
+            status.innerText = "❌ Please enter a valid number";
+            status.className = "error";
+            return;
         }
-      } catch (err) {
-        status.innerText = "❌ Connection failed.";
-      }
+
+        // UI State: Loading
+        btn.disabled = true;
+        status.innerText = "⏳ Connecting to GitHub...";
+        status.className = "";
+
+        try {
+            // This path must match your Netlify function filename
+            const response = await fetch('/.netlify/functions/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userInput: val })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                status.innerHTML = `✅ Success!<br>New Total: ${data.newTotal}`;
+                status.className = "success";
+                input.value = ""; // Clear input on success
+            } else {
+                status.innerText = "❌ Server Error: " + (data.message || "Failed to update");
+                status.className = "error";
+            }
+        } catch (err) {
+            status.innerText = "❌ Connection failed. Is the site live?";
+            status.className = "error";
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+        }
     }
-  </script>
+</script>
+
 </body>
 </html>
