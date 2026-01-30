@@ -1,43 +1,51 @@
 const { Octokit } = require("@octokit/rest");
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
+  // 1. Only allow POST requests from your button
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
-  const { userInput } = JSON.parse(event.body);
+  // 2. Initialize GitHub connection
+  // Ensure GITHUB_TOKEN is added to Netlify Environment Variables!
   const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
   try {
-    // 1. Get current data from GitHub
+    const { userInput } = JSON.parse(event.body);
+
+    // 3. Get current data.json from your repo
     const { data } = await octokit.repos.getContent({
-      owner: "coolgames555",
-      repo: "venmoo",
+      owner: "coolgames555", // Change this
+      repo: "venmoo",         // Change this
       path: "data.json",
     });
 
     const content = JSON.parse(Buffer.from(data.content, "base64").toString());
     
-    // 2. Perform the addition
-    // We use Number() to ensure we aren't accidentally "adding" strings like "5" + "5" = "55"
+    // 4. Do the math
     const currentTotal = Number(content.total) || 0;
     const newTotal = currentTotal + Number(userInput);
-    
     content.total = newTotal;
 
-    // 3. Push the updated sum back to GitHub
+    // 5. Push update to GitHub
     await octokit.repos.createOrUpdateFileContents({
-      owner: "YOUR_GITHUB_USERNAME",
-      repo: "YOUR_REPO_NAME",
+      owner: "coolgames555", // Change this
+      repo: "venmoo",         // Change this
       path: "data.json",
-      message: `Updated total to: ${newTotal}`,
+      message: `Updated total to ${newTotal}`,
       content: Buffer.from(JSON.stringify(content, null, 2)).toString("base64"),
       sha: data.sha,
     });
 
-    return { 
-      statusCode: 200, 
-      body: JSON.stringify({ message: "Success!", newTotal: newTotal }) 
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ newTotal: newTotal }),
     };
   } catch (error) {
-    return { statusCode: 500, body: error.toString() };
+    console.error(error);
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ message: error.message }) 
+    };
   }
 };
