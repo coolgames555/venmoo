@@ -1,0 +1,9 @@
+{
+  "name": "github-integer-adder",
+  "version": "1.0.0",
+  "description": "A simple site to update a JSON file on GitHub",
+  "main": "index.html",
+  "dependencies": {
+    "@octokit/rest": "^20.0.0"
+  }
+}
