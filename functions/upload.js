@@ -19,23 +19,22 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "POST") {
       const { userInput } = JSON.parse(event.body);
-      
-      // Calculate new total
-      let newTotal = currentTotal + Number(userInput);
+      const amountToAdd = Number(userInput);
 
-      // --- THE "NO NEGATIVE" CHECK ---
-      if (newTotal < 0) {
+      // --- THE "POSITIVE ONLY" CHECK ---
+      if (amountToAdd < 0) {
         return { 
           statusCode: 400, 
-          body: JSON.stringify({ message: "Total cannot be less than zero!" }) 
+          body: JSON.stringify({ message: "You can only add positive numbers!" }) 
         };
       }
 
+      const newTotal = currentTotal + amountToAdd;
       content.total = newTotal;
 
       await octokit.repos.createOrUpdateFileContents({
         ...params,
-        message: `Updated total to ${newTotal}`,
+        message: `Added ${amountToAdd}. New total: ${newTotal}`,
         content: Buffer.from(JSON.stringify(content, null, 2)).toString("base64"),
         sha: data.sha,
       });
