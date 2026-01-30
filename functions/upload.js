@@ -9,23 +9,28 @@ exports.handler = async (event) => {
   };
 
   try {
-    // 1. Get the current file from GitHub
     const { data } = await octokit.repos.getContent(params);
     const content = JSON.parse(Buffer.from(data.content, "base64").toString());
     const currentTotal = Number(content.total) || 0;
 
-    // IF REQUEST IS GET: Just return the current number
     if (event.httpMethod === "GET") {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ currentTotal }),
-      };
+      return { statusCode: 200, body: JSON.stringify({ currentTotal }) };
     }
 
-    // IF REQUEST IS POST: Add the user input and save
     if (event.httpMethod === "POST") {
       const { userInput } = JSON.parse(event.body);
-      const newTotal = currentTotal + Number(userInput);
+      
+      // Calculate new total
+      let newTotal = currentTotal + Number(userInput);
+
+      // --- THE "NO NEGATIVE" CHECK ---
+      if (newTotal < 0) {
+        return { 
+          statusCode: 400, 
+          body: JSON.stringify({ message: "Total cannot be less than zero!" }) 
+        };
+      }
+
       content.total = newTotal;
 
       await octokit.repos.createOrUpdateFileContents({
